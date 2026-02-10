@@ -5,6 +5,7 @@ CSRF = ""
 SESSDATA = ""
 DELAY = 100
 CHECK_ROOM_DELAY = 5000
+HUNT_THRESHOLD = 5000
 
 session = requests.Session()
 session.headers.update({"User-Agent": "Mozilla/5.0"})
@@ -86,7 +87,7 @@ def fetch_recommend_roomid():
                 target = 1000000
             else:
                 pass
-            if delta < 10000:
+            if delta < HUNT_THRESHOLD:
                 if delta < preferred_delta:
                     preferred_room_id = room['room_id']
                     preferred_delta = delta
@@ -156,5 +157,8 @@ if __name__ == "__main__":
                         break
                     elif result.get("message") == "抢光":
                         print("Bonus empty.")
+                        break
+                    elif result.get("data", {}).get("reason", "") == "gray":
+                        print("May risked, stop trying.")
                         break
                     time.sleep(DELAY/1000)
