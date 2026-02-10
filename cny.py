@@ -7,8 +7,11 @@ DELAY = 100
 CHECK_ROOM_DELAY = 5000
 HUNT_THRESHOLD = 5000
 
-session = requests.Session()
-session.headers.update({"User-Agent": "Mozilla/5.0"})
+session = bilibili_util.BilibiliClient()
+session.session.headers.update(
+    {"User-Agent": "Mozilla/5.0","buvid": session.buvid}
+)
+
 
 def fetch_chat_rooms():
     url = 'https://api.live.bilibili.com/live.center.interface.v1.Chat/GetChatRoomsDetail'
@@ -23,7 +26,7 @@ def fetch_chat_rooms():
             "exist_ids": ','.join(fetched_ids)
         }
         response = session.get(url, params=params)
-        data = response.json()
+        data = response
         # print(data)
         for room in data.get('data', {}).get('chat_rooms', []):
             fetched_ids.append(str(room['room_id']))
@@ -66,7 +69,7 @@ def fetch_recommend_roomid():
         }
         try:
             response = session.get(url, params=params)
-            data = response.json()
+            data = response
         except Exception as e:
             print("Error fetching chat rooms:", e)
             continue
@@ -102,7 +105,7 @@ def fetch_room_next_task_info(room_id):
         "room_id": room_id
     }
     response = session.get(url, params=params)
-    data = response.json()
+    data = response
     # fortune_value
     now = data.get('data', {}).get('fortune_value', 0)
     for step in data.get('data', {}).get('steps', []):
@@ -118,10 +121,9 @@ def fetch_room_next_task_info(room_id):
 
 def receive_bonus(param):
     global CSRF, SESSDATA
-    url = f'https://api.bilibili.com/x/custom_activity/cny/2026/bonus/receive?csrf={CSRF}'
-    response = session.post(url, json=param, headers={"Cookie": f"SESSDATA={SESSDATA}"})
-    data = response.json()
-    return data
+    url = f'https://api.bilibili.com/x/custom_activity/cny/2026/bonus/receive'
+    response = session.post(url, params={"csrf": CSRF},json=param, headers={"Cookie": f"SESSDATA={SESSDATA}"})
+    return response
 
 if __name__ == "__main__":
     # print(fetch_chat_rooms())
@@ -132,6 +134,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error fetching recommended room ID: {e}")
             continue
+        room_id = 42062
         if room_id is None:
             print("No suitable room found.")
             time.sleep(CHECK_ROOM_DELAY/1000)
@@ -145,6 +148,7 @@ if __name__ == "__main__":
                 params = None
             print(params)
             if params:
+                session.wbi = True
                 while True:
                     try:
                         result = receive_bonus(params)
@@ -162,3 +166,4 @@ if __name__ == "__main__":
                         print("May risked, stop trying.")
                         break
                     time.sleep(DELAY/1000)
+                session.wbi = False
