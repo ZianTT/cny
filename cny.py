@@ -9,7 +9,7 @@ HUNT_THRESHOLD = 5000
 
 session = bilibili_util.BilibiliClient()
 session.session.headers.update(
-    {"User-Agent": "Mozilla/5.0","buvid": session.buvid}
+    {"buvid": session.buvid}
 )
 
 
